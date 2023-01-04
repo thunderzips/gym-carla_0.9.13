@@ -22,7 +22,7 @@ import carla
 from gym_carla.envs.render import BirdeyeRender
 from gym_carla.envs.route_planner import RoutePlanner
 from gym_carla.envs.misc import *
-
+import open3d as o3d
 
 class CarlaEnv(gym.Env):
   """An OpenAI gym wrapper for CARLA simulator."""
@@ -225,8 +225,18 @@ class CarlaEnv(gym.Env):
     # Add lidar sensor
     self.lidar_sensor = self.world.spawn_actor(self.lidar_bp, self.lidar_trans, attach_to=self.ego)
     self.lidar_sensor.listen(lambda data: get_lidar_data(data))
+
+    self.lidar_data = o3d.geometry.PointCloud()
+
     def get_lidar_data(data):
-      self.lidar_data = data
+      # self.lidar_data = data
+
+      cc = np.copy(np.frombuffer(data.raw_data, dtype=np.dtype('f4')))
+      cc = np.reshape(cc, (int(cc.shape[0] / 4), 4))
+
+      points = cc[:, :-1]
+      points[:, :1] = -points[:, :1]
+      self.lidar_data.points = o3d.utility.Vector3dVector(points)
 
     # Add camera sensor
     self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
@@ -492,8 +502,8 @@ class CarlaEnv(gym.Env):
     ## Lidar image generation
     point_cloud = []
     # Get point cloud data
-    for location in self.lidar_data:
-      point_cloud.append([location.x, location.y, -location.z])
+    for location in self.lidar_data.points:
+      point_cloud.append([location[0], location[1], -location[2]])
     point_cloud = np.array(point_cloud)
     # Separate the 3D space to bins for point cloud, x and y is set according to self.lidar_bin,
     # and z is set to be two bins.
