@@ -45,6 +45,12 @@ class CarlaEnv(gym.Env):
     self.desired_speed = params['desired_speed']
     self.max_ego_spawn_times = params['max_ego_spawn_times']
     self.display_route = params['display_route']
+    
+    if 'show_display' in params.keys():
+      self.show_display = params['show_display']
+    else:
+      self.show_display = False
+
     if 'pixor' in params.keys():
       self.pixor = params['pixor']
       self.pixor_size = params['pixor_size']
@@ -148,6 +154,7 @@ class CarlaEnv(gym.Env):
       self.pixel_grid = np.vstack((x, y)).T
 
   def reset(self):
+    print('Resetting Carla Env')
     # Clear sensor objects  
     self.collision_sensor = None
     self.lidar_sensor = None
@@ -343,9 +350,15 @@ class CarlaEnv(gym.Env):
     """Initialize the birdeye view renderer.
     """
     pygame.init()
+    
+    display_flags = pygame.HWSURFACE | pygame.DOUBLEBUF
+    
+    if not self.show_display:
+      display_flags |= pygame.HIDDEN
+
     self.display = pygame.display.set_mode(
     (self.display_size * 3, self.display_size),
-    pygame.HWSURFACE | pygame.DOUBLEBUF)
+    display_flags)
 
     pixels_per_meter = self.display_size / self.obs_range
     pixels_ahead_vehicle = (self.obs_range/2 - self.d_behind) * pixels_per_meter
@@ -538,7 +551,8 @@ class CarlaEnv(gym.Env):
     self.display.blit(camera_surface, (self.display_size * 2, 0))
 
     # Display on pygame
-    pygame.display.flip()
+    if self.show_display:
+      pygame.display.flip()
 
     # State observation
     ego_trans = self.ego.get_transform()
@@ -663,9 +677,9 @@ class CarlaEnv(gym.Env):
           return True
 
     # If out of lane
-    dis, _ = get_lane_dis(self.waypoints, ego_x, ego_y)
-    if abs(dis) > self.out_lane_thres:
-      return True
+    # dis, _ = get_lane_dis(self.waypoints, ego_x, ego_y)
+    # if abs(dis) > self.out_lane_thres:
+    #   return True
 
     return False
 

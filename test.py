@@ -12,7 +12,7 @@ import carla
 def main():
   # parameters for the gym_carla environment
   params = {
-    'number_of_vehicles': 100,
+    'number_of_vehicles': 0,
     'number_of_walkers': 0,
     'display_size': 256,  # screen size of bird-eye render
     'max_past_step': 1,  # the number of past steps to draw
@@ -37,10 +37,13 @@ def main():
     'display_route': True,  # whether to render the desired route
     'pixor_size': 64,  # size of the pixor labels
     'pixor': False,  # whether to output PIXOR observation
+    'show_display' : True
   }
 
   # Set gym-carla environment
   env = gym.make('carla-v0', params=params)
+  
+  print("Starting Test")
   obs = env.reset()
 
   while True:
@@ -49,7 +52,7 @@ def main():
 
     if done:
       obs = env.reset()
-
+      print(obs.keys())
 
 if __name__ == '__main__':
   main()
